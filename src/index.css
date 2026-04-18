@@ -1,13 +1,61 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 bg-slate-50 text-slate-900 antialiased;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+:root.theme-dark body {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
+:root.theme-dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+:root.theme-dark .bg-slate-50 {
+  background-color: #1e293b !important;
+}
+
+:root.theme-dark .bg-indigo-50 {
+  background-color: #312e81 !important;
+}
+
+:root.theme-dark .border-slate-200,
+:root.theme-dark .border-indigo-100 {
+  border-color: #334155 !important;
+}
+
+:root.theme-dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+:root.theme-dark .text-slate-800,
+:root.theme-dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+:root.theme-dark .text-slate-600,
+:root.theme-dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+:root.theme-dark .text-indigo-900,
+:root.theme-dark .text-indigo-800 {
+  color: #c7d2fe !important;
+}
+
+:root.theme-dark .text-rose-800,
+:root.theme-dark .text-rose-700 {
+  color: #fda4af !important;
+}
+
+:root.theme-dark .text-emerald-800,
+:root.theme-dark .text-emerald-700 {
+  color: #6ee7b7 !important;
 }
