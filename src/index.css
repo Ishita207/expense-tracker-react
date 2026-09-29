@@ -3,9 +3,59 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.theme-dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply m-0 bg-slate-50 text-slate-900 antialiased;
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer components {
+  .field-control {
+    @apply w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition;
+    @apply focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100;
+  }
+
+  select.field-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234f46e5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem 1rem;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+
+  select.field-control option {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  input[type='date'].field-control,
+  input[type='month'].field-control {
+    color-scheme: light;
+    min-height: 2.5rem;
+  }
+
+  input[type='date'].field-control::-webkit-calendar-picker-indicator,
+  input[type='month'].field-control::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+    padding: 0.15rem;
+    border-radius: 0.25rem;
+  }
+
+  input[type='date'].field-control::-webkit-calendar-picker-indicator:hover,
+  input[type='month'].field-control::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background-color: rgb(99 102 241 / 0.12);
   }
 }
 
@@ -58,4 +108,41 @@
 :root.theme-dark .text-emerald-800,
 :root.theme-dark .text-emerald-700 {
   color: #6ee7b7 !important;
+}
+
+:root.theme-dark .field-control {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+:root.theme-dark .field-control:focus {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.25);
+}
+
+:root.theme-dark select.field-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a5b4fc'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-color: #1e293b;
+}
+
+:root.theme-dark select.field-control option {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
+:root.theme-dark input[type='date'].field-control,
+:root.theme-dark input[type='month'].field-control {
+  color-scheme: dark;
+}
+
+:root.theme-dark input[type='date'].field-control::-webkit-calendar-picker-indicator,
+:root.theme-dark input[type='month'].field-control::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) sepia(0.35) saturate(3) hue-rotate(200deg);
+  opacity: 0.9;
+}
+
+:root.theme-dark input[type='date'].field-control::-webkit-calendar-picker-indicator:hover,
+:root.theme-dark input[type='month'].field-control::-webkit-calendar-picker-indicator:hover {
+  background-color: rgb(129 140 248 / 0.2);
 }

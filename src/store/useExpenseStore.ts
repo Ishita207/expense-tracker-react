@@ -1,20 +1,57 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { createJSONStorage, persist, type PersistOptions } from 'zustand/middleware';
 import { budgetCategories } from '../constants/categories';
+import type {
+  CategoryBudgetMap,
+  ExpenseStore,
+  PersistedExpenseState,
+  Theme,
+} from '../types/expense';
 import { getIndiaCurrentMonthISO } from '../utils/indiaDate';
 
-const createDefaultBudgets = () =>
-  budgetCategories.reduce((accumulator, category) => {
-    return { ...accumulator, [category]: 0 };
+const createDefaultBudgets = (): CategoryBudgetMap =>
+  budgetCategories.reduce<CategoryBudgetMap>((accumulator, category) => {
+    return { ...accumulator, [category.name]: 0 };
   }, {});
 
-const useExpenseStore = create(
+const persistOptions: PersistOptions<ExpenseStore, PersistedExpenseState> = {
+  name: 'expense-tracker-store',
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({
+    expenses: state.expenses,
+    selectedMonth: state.selectedMonth,
+    categoryBudgets: state.categoryBudgets,
+    theme: state.theme,
+  }),
+  merge: (persistedState, currentState) => {
+    const persisted = (persistedState ?? {}) as Partial<PersistedExpenseState>;
+    const persistedBudgets = persisted.categoryBudgets ?? {};
+    const mergedBudgets = budgetCategories.reduce<CategoryBudgetMap>((accumulator, category) => {
+      return {
+        ...accumulator,
+        [category.name]: persistedBudgets[category.name] ?? currentState.categoryBudgets[category.name] ?? 0,
+      };
+    }, {});
+
+    return {
+      ...currentState,
+      ...persisted,
+      categoryBudgets: mergedBudgets,
+      theme: persisted.theme === 'dark' ? 'dark' : 'light',
+    };
+  },
+  onRehydrateStorage: () => (state) => {
+    state?.setHasHydrated(true);
+  },
+};
+
+const useExpenseStore = create<ExpenseStore>()(
   persist(
     (set) => ({
       expenses: [],
       selectedMonth: getIndiaCurrentMonthISO(),
       categoryBudgets: createDefaultBudgets(),
-      theme: 'light',
+      theme: 'light' satisfies Theme,
       hasHydrated: false,
       addExpenseEntry: (expense) =>
         set((state) => ({
@@ -58,36 +95,7 @@ const useExpenseStore = create(
           hasHydrated: value,
         })),
     }),
-    {
-      name: 'expense-tracker-store',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        expenses: state.expenses,
-        selectedMonth: state.selectedMonth,
-        categoryBudgets: state.categoryBudgets,
-        theme: state.theme,
-      }),
-      merge: (persistedState, currentState) => {
-        const persisted = persistedState || {};
-        const persistedBudgets = persisted.categoryBudgets || {};
-        const mergedBudgets = budgetCategories.reduce((accumulator, category) => {
-          return {
-            ...accumulator,
-            [category]: persistedBudgets[category] ?? currentState.categoryBudgets[category] ?? 0,
-          };
-        }, {});
-
-        return {
-          ...currentState,
-          ...persisted,
-          categoryBudgets: mergedBudgets,
-          theme: persisted.theme === 'dark' ? 'dark' : 'light',
-        };
-      },
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
-    }
+    persistOptions
   )
 );
 

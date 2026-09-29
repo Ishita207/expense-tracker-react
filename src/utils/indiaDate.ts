@@ -1,6 +1,6 @@
 const INDIA_TIME_ZONE = 'Asia/Kolkata';
 
-export function getIndiaTodayISO() {
+export function getIndiaTodayISO(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: INDIA_TIME_ZONE,
     year: 'numeric',
@@ -9,11 +9,11 @@ export function getIndiaTodayISO() {
   }).format(new Date());
 }
 
-export function getIndiaCurrentMonthISO() {
+export function getIndiaCurrentMonthISO(): string {
   return getIndiaTodayISO().slice(0, 7);
 }
 
-export function formatIndianDate(isoDate) {
+export function formatIndianDate(isoDate?: string | null): string {
   if (!isoDate) {
     return '';
   }
@@ -25,7 +25,7 @@ export function formatIndianDate(isoDate) {
   }).format(new Date(`${isoDate}T00:00:00+05:30`));
 }
 
-export function formatIndianMonth(monthIso) {
+export function formatIndianMonth(monthIso?: string | null): string {
   if (!monthIso) {
     return '';
   }

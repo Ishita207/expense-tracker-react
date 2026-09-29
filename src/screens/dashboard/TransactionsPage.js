@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ExpenseForm from '../../components/ExpenseForm';
 import ExpenseList from '../../components/ExpenseList';
-import { categories } from '../../constants/categories';
+import { categories, getCategoryMeta } from '../../constants/categories';
 import { useExpenseData } from '../../context/ExpenseDataContext';
+import useFilteredTransactions from '../../hooks/useFilteredTransactions';
 
 function TransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,36 +32,17 @@ function TransactionsPage() {
     setDateTo(searchParams.get('dateTo') || '');
   }, [searchParams]);
 
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter((expense) => {
-      if (searchQuery) {
-        const query = searchQuery.trim().toLowerCase();
-        const searchTarget = `${expense.title} ${expense.category} ${expense.type}`.toLowerCase();
-        if (!searchTarget.includes(query)) {
-          return false;
-        }
-      }
-      if (selectedCategory !== 'all' && expense.category !== selectedCategory) {
-        return false;
-      }
-      if (dateFrom && expense.date < dateFrom) {
-        return false;
-      }
-      if (dateTo && expense.date > dateTo) {
-        return false;
-      }
-      if (amountMin && expense.amount < Number(amountMin)) {
-        return false;
-      }
-      if (amountMax && expense.amount > Number(amountMax)) {
-        return false;
-      }
-      return true;
-    });
-  }, [amountMax, amountMin, dateFrom, dateTo, expenses, searchQuery, selectedCategory]);
+  const filteredExpenses = useFilteredTransactions(expenses, {
+    searchQuery,
+    category: selectedCategory,
+    amountMin,
+    amountMax,
+    dateFrom,
+    dateTo,
+  });
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-8 md:grid-cols-2">
+    <main className="grid w-full gap-4 px-4 py-8 sm:px-6 lg:px-8 xl:px-10 md:grid-cols-2">
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Transactions</h2>
         <p className="mt-1 text-sm text-slate-500">Add, edit, or remove income and expense entries.</p>
@@ -81,7 +63,7 @@ function TransactionsPage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search by title, category, or type"
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="field-control"
             />
           </label>
           <label className="grid gap-1 text-sm text-slate-700">
@@ -89,12 +71,12 @@ function TransactionsPage() {
             <select
               value={selectedCategory}
               onChange={(event) => setSelectedCategory(event.target.value)}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="field-control"
             >
               <option value="all">All categories</option>
               {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+                <option key={category.name} value={category.name}>
+                  {category.name}
                 </option>
               ))}
             </select>
@@ -108,7 +90,7 @@ function TransactionsPage() {
               value={amountMin}
               onChange={(event) => setAmountMin(event.target.value)}
               placeholder="0.00"
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="field-control"
             />
           </label>
           <label className="grid gap-1 text-sm text-slate-700">
@@ -120,7 +102,7 @@ function TransactionsPage() {
               value={amountMax}
               onChange={(event) => setAmountMax(event.target.value)}
               placeholder="0.00"
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="field-control"
             />
           </label>
           <label className="grid gap-1 text-sm text-slate-700">
@@ -141,7 +123,7 @@ function TransactionsPage() {
                   return next;
                 });
               }}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="field-control"
             />
           </label>
           <label className="grid gap-1 text-sm text-slate-700">
@@ -162,7 +144,7 @@ function TransactionsPage() {
                   return next;
                 });
               }}
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="field-control"
             />
           </label>
         </div>

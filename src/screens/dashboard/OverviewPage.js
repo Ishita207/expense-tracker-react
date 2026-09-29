@@ -14,7 +14,7 @@ function OverviewPage() {
   } = useExpenseData();
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-8 md:grid-cols-3">
+    <main className="grid w-full gap-4 px-4 py-8 sm:px-6 lg:px-8 xl:px-10 md:grid-cols-3">
       <section className="rounded-2xl bg-white p-4 shadow-sm md:col-span-3">
         <h2 className="text-xl font-semibold text-slate-900">Overview</h2>
         <p className="mt-1 text-sm text-slate-500">Quick snapshot of your financial position.</p>

@@ -16,7 +16,7 @@ function BudgetsPage() {
   } = useExpenseData();
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-8">
+    <main className="grid w-full gap-4 px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       <ExpenseSummary
         totalIncome={totalIncome}
         totalExpense={totalExpense}

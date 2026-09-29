@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from 'react';
 import {
   Bar,
   BarChart,
@@ -10,29 +11,197 @@ import {
   YAxis,
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { getCategoryColor, getCategoryMeta } from '../constants/categories';
 import { formatCurrency } from '../utils/formatCurrency';
 import { formatIndianDate, formatIndianMonth } from '../utils/indiaDate';
-import useExpenseStore from '../store/useExpenseStore';
 
-const donutColors = ['#3459db', '#6d8bff', '#8f6aff', '#37a2ff', '#27c1b3', '#ff7a8f'];
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const CategoryDonutCard = memo(function CategoryDonutCard({ selectedMonth, donutData, formatTooltip }) {
+  return (
+    <article className="rounded-xl bg-slate-50 p-3">
+      <h3 className="text-sm font-semibold text-slate-800">
+        Category Donut ({formatIndianMonth(selectedMonth)})
+      </h3>
+      {donutData.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">No expense data for this month yet.</p>
+      ) : (
+        <div className="mt-2 flex flex-row gap-1 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-center">
+          <div className="h-60 w-full">
+            <ResponsiveContainer width="100%" height={240}>
+              <PieChart>
+                <Pie
+                  data={donutData}
+                  dataKey="value"
+                  nameKey="Total Expense"
+                  innerRadius={55}
+                  outerRadius={90}
+                  paddingAngle={2}
+                >
+                  {donutData.map((entry) => (
+                    <Cell key={entry.name} fill={getCategoryColor(entry.name)} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={formatTooltip} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <ul className="grid gap-3 text-s text-slate-700">
+            {donutData.map((entry) => {
+              const meta = getCategoryMeta(entry.name);
+              const Icon = meta.icon;
+              return (
+                <li key={entry.name} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-[11px] leading-none"
+                      style={{color: meta.color, fontSize: '18px' }}
+                      aria-hidden="true"
+                    >
+                      <Icon size={22} weight="duotone" />
+                    </span>
+                    {entry.name}
+                  </span>
+                  <strong>{formatCurrency(entry.value)}</strong>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </article>
+  );
+});
+
+const MonthlyTrendCard = memo(function MonthlyTrendCard({ monthlyTrendData, formatTooltip }) {
+  return (
+    <article className="rounded-xl bg-slate-50 p-3">
+      <h3 className="text-sm font-semibold text-slate-800">Monthly Trend (Last 6 Months)</h3>
+      <div className="mt-2 h-60 w-full">
+        <ResponsiveContainer width="100%" height={240}>
+          <BarChart data={monthlyTrendData}>
+            <XAxis dataKey="month" />
+            <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
+            <Tooltip formatter={formatTooltip} />
+            <Bar dataKey="amount" fill="#3459db" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </article>
+  );
+});
+
+const HeatmapDay = memo(function HeatmapDay({ day, onSelectDate }) {
+  const handleClick = useCallback(() => {
+    if (!day.date) {
+      return;
+    }
+    onSelectDate(day.date);
+  }, [day.date, onSelectDate]);
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (!day.date || (event.key !== 'Enter' && event.key !== ' ')) {
+        return;
+      }
+      event.preventDefault();
+      onSelectDate(day.date);
+    },
+    [day.date, onSelectDate]
+  );
+
+  return (
+    <div
+      className={`grid aspect-square place-items-center rounded-md text-[18px] ${
+        day.intensity >= 0.55 ? 'text-white' : 'text-slate-600'
+      } transition hover:ring-2 hover:ring-indigo-300`}
+      title={getHeatmapDayTitle(day)}
+      style={{ backgroundColor: getHeatmapColor(day.intensity) }}
+      role={day.date ? 'button' : undefined}
+      tabIndex={day.date ? 0 : -1}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
+      {day.date ? day.date.split('-')[2] : ''}
+    </div>
+  );
+});
+
+const SpendingHeatmapCard = memo(function SpendingHeatmapCard({
+  selectedMonth,
+  heatmap,
+  onSelectDate,
+}) {
+  return (
+    <article className="mt-3 rounded-xl bg-slate-50 p-3">
+      <h3 className="text-sm font-semibold text-slate-800">
+        Spending Heatmap by Weekday ({formatIndianMonth(selectedMonth)})
+      </h3>
+      <div className="mt-2">
+        <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs text-slate-500">
+          {weekdayLabels.map((weekday) => (
+            <span key={weekday}>{weekday}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {heatmap.map((week, weekIndex) =>
+            week.map((day, dayIndex) => (
+              <HeatmapDay
+                key={`${weekIndex}-${dayIndex}`}
+                day={day}
+                onSelectDate={onSelectDate}
+              />
+            ))
+          )}
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-2 text-xs text-slate-500">
+          <span>less</span>
+          <div
+            className="h-2.5 w-28 overflow-hidden rounded-full"
+            style={{
+              background: `linear-gradient(to right, ${getHeatmapColor(0)}, ${getHeatmapColor(0.35)}, ${getHeatmapColor(0.7)}, ${getHeatmapColor(1)})`,
+            }}
+            aria-hidden="true"
+          />
+          <span>more</span>
+        </div>
+      </div>
+    </article>
+  );
+});
 
 function ExpenseInsights({ expenses, selectedMonth, onMonthChange }) {
   const navigate = useNavigate();
-  const theme = useExpenseStore((state) => state.theme);
-  console.log(theme);
-  const monthlyOutflowTotals = getMonthlyOutflowCategoryTotals(expenses, selectedMonth);
 
-  const donutData = Object.entries(monthlyOutflowTotals)
-    .map(([category, amount]) => ({
-      name: category,
-      value: Number(amount.toFixed(2)),
-    }))
-    .filter((entry) => entry.value > 0)
-    .sort((first, second) => second.value - first.value);
+  const donutData = useMemo(() => {
+    const monthlyOutflowTotals = getMonthlyOutflowCategoryTotals(expenses, selectedMonth);
+    return Object.entries(monthlyOutflowTotals)
+      .map(([category, amount]) => ({
+        name: category,
+        value: Number(amount.toFixed(2)),
+      }))
+      .filter((entry) => entry.value > 0)
+      .sort((first, second) => second.value - first.value);
+  }, [expenses, selectedMonth]);
 
-  const monthlyTrendData = getLastSixMonthsSpending(expenses, selectedMonth);
-  const heatmap = getMonthHeatmap(expenses, selectedMonth);
+  const monthlyTrendData = useMemo(
+    () => getLastSixMonthsSpending(expenses, selectedMonth),
+    [expenses, selectedMonth]
+  );
+
+  const heatmap = useMemo(
+    () => getMonthHeatmap(expenses, selectedMonth),
+    [expenses, selectedMonth]
+  );
+
+  const formatTooltip = useCallback((value) => formatCurrency(Number(value)), []);
+
+  const handleSelectDate = useCallback(
+    (date) => {
+      navigate(`/transactions?dateFrom=${date}&dateTo=${date}`);
+    },
+    [navigate]
+  );
 
   return (
     <section className="rounded-2xl bg-white p-4 shadow-sm">
@@ -44,112 +213,24 @@ function ExpenseInsights({ expenses, selectedMonth, onMonthChange }) {
           type="month"
           value={selectedMonth}
           onChange={(event) => onMonthChange(event.target.value)}
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="field-control"
         />
       </label>
 
       <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <article className="rounded-xl bg-slate-50 p-3">
-          <h3 className="text-sm font-semibold text-slate-800">
-            Category Donut ({formatIndianMonth(selectedMonth)})
-          </h3>
-          {donutData.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-500">No expense data for this month yet.</p>
-          ) : (
-            <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-center">
-              <div className="h-60 w-full">
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie
-                      data={donutData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={55}
-                      outerRadius={90}
-                      paddingAngle={2}
-                    >
-                      {donutData.map((entry, index) => (
-                        <Cell key={entry.name} fill={donutColors[index % donutColors.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <ul className="grid gap-2 text-xs text-slate-700">
-                {donutData.map((entry, index) => (
-                  <li key={entry.name} className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="inline-block h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: donutColors[index % donutColors.length] }}
-                      />
-                      {entry.name}
-                    </span>
-                    <strong>{formatCurrency(entry.value)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </article>
-
-        <article className="rounded-xl bg-slate-50 p-3">
-          <h3 className="text-sm font-semibold text-slate-800">Monthly Trend (Last 6 Months)</h3>
-          <div className="mt-2 h-60 w-full">
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={monthlyTrendData}>
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="amount" fill="#3459db" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </article>
+        <CategoryDonutCard
+          selectedMonth={selectedMonth}
+          donutData={donutData}
+          formatTooltip={formatTooltip}
+        />
+        <MonthlyTrendCard monthlyTrendData={monthlyTrendData} formatTooltip={formatTooltip} />
       </div>
 
-      <article className="mt-3 rounded-xl bg-slate-50 p-3">
-        <h3 className="text-sm font-semibold text-slate-800">
-          Spending Heatmap by Weekday ({formatIndianMonth(selectedMonth)})
-        </h3>
-        <div className="mt-2">
-          <div className="mb-1 grid grid-cols-7 gap-1 text-center text-xs text-slate-500">
-            {weekdayLabels.map((weekday) => (
-              <span key={weekday}>{weekday}</span>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {heatmap.map((week, weekIndex) =>
-              week.map((day, dayIndex) => (
-                <div
-                  key={`${weekIndex}-${dayIndex}`}
-                  className={`grid aspect-square place-items-center rounded-md text-[16px] ${theme === 'dark' ? 'text-indigo-500' : 'text-slate-700'} transition hover:ring-2 hover:ring-indigo-300`}
-                  title={getHeatmapDayTitle(day)}
-                  style={{ backgroundColor: getHeatmapColor(day.intensity) }}
-                  role={day.date ? 'button' : undefined}
-                  tabIndex={day.date ? 0 : -1}
-                  onClick={() => {
-                    if (!day.date) {
-                      return;
-                    }
-                    navigate(`/transactions?dateFrom=${day.date}&dateTo=${day.date}`);
-                  }}
-                  onKeyDown={(event) => {
-                    if (!day.date || (event.key !== 'Enter' && event.key !== ' ')) {
-                      return;
-                    }
-                    event.preventDefault();
-                    navigate(`/transactions?dateFrom=${day.date}&dateTo=${day.date}`);
-                  }}
-                >
-                  {day.date ? day.date.split('-')[2] : ''}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </article>
+      <SpendingHeatmapCard
+        selectedMonth={selectedMonth}
+        heatmap={heatmap}
+        onSelectDate={handleSelectDate}
+      />
     </section>
   );
 }
@@ -218,10 +299,7 @@ function getMonthHeatmap(expenses, selectedMonth) {
     }
   });
 
-  const maxSpend = Math.max(
-    ...Object.values(totalsByDate).map((day) => day.amount),
-    0
-  );
+  const maxSpend = Math.max(...Object.values(totalsByDate).map((day) => day.amount), 0);
   const weeks = [];
   let week = Array(7)
     .fill(null)
@@ -265,7 +343,7 @@ function getHeatmapDayTitle(day) {
   const topCategories = Object.entries(day.categoryTotals || {})
     .sort((first, second) => second[1] - first[1])
     .slice(0, 2)
-    .map(([category, amount]) => `${category}: ${formatCurrency(amount)}`)
+    .map(([category, amount]) => `${getCategoryMeta(category).name}: ${formatCurrency(amount)}`)
     .join(', ');
 
   const categoryText = topCategories ? ` | Top: ${topCategories}` : '';
@@ -293,19 +371,34 @@ function isOutflow(type) {
 }
 
 function getHeatmapColor(intensity) {
-  if (intensity === 0) {
-    return '#edf1ff';
+  const t = Math.min(Math.max(intensity || 0, 0), 1);
+
+  // Near-white → soft indigo → deep indigo/purple for relative spend.
+  const stops = [
+    { t: 0, color: [248, 250, 252] }, // #f8fafc
+    { t: 0.25, color: [199, 210, 254] }, // #c7d2fe
+    { t: 0.5, color: [129, 140, 248] }, // #818cf8
+    { t: 0.75, color: [79, 70, 229] }, // #4f46e5
+    { t: 1, color: [49, 46, 129] }, // #312e81
+  ];
+
+  let start = stops[0];
+  let end = stops[stops.length - 1];
+  for (let index = 0; index < stops.length - 1; index += 1) {
+    if (t >= stops[index].t && t <= stops[index + 1].t) {
+      start = stops[index];
+      end = stops[index + 1];
+      break;
+    }
   }
-  if (intensity < 0.25) {
-    return '#d4ddff';
-  }
-  if (intensity < 0.5) {
-    return '#a6b9ff';
-  }
-  if (intensity < 0.75) {
-    return '#6d8bff';
-  }
-  return '#3459db';
+
+  const range = end.t - start.t || 1;
+  const localT = (t - start.t) / range;
+  const r = Math.round(start.color[0] + (end.color[0] - start.color[0]) * localT);
+  const g = Math.round(start.color[1] + (end.color[1] - start.color[1]) * localT);
+  const b = Math.round(start.color[2] + (end.color[2] - start.color[2]) * localT);
+
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default ExpenseInsights;
+export default memo(ExpenseInsights);

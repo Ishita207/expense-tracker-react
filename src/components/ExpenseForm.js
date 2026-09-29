@@ -1,4 +1,5 @@
-import { categories } from '../constants/categories';
+import { memo } from 'react';
+import { categories, getCategoryMeta } from '../constants/categories';
 
 function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) {
   return (
@@ -12,7 +13,7 @@ function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) 
           onChange={onChange}
           placeholder="Lunch, groceries, electricity bill..."
           required
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="field-control"
         />
       </label>
 
@@ -27,7 +28,7 @@ function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) 
           onChange={onChange}
           placeholder="0.00"
           required
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="field-control"
         />
       </label>
 
@@ -37,7 +38,7 @@ function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) 
           name="type"
           value={formData.type}
           onChange={onChange}
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="field-control"
         >
           <option value="expense">Expense</option>
           <option value="income">Income</option>
@@ -49,13 +50,13 @@ function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) 
         Category
         <select
           name="category"
-          value={formData.category}
-          onChange={onChange}
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          value={formData.category.name}
+          onChange={(event) => onChange({ ...event, target: { ...event.target, name: 'category', value: event.target.value.name } })}
+          className="field-control"
         >
           {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
+            <option key={category.name} value={category.name}>
+              {category.name || 'Other'}
             </option>
           ))}
         </select>
@@ -69,7 +70,7 @@ function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) 
           value={formData.date}
           onChange={onChange}
           required
-          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="field-control"
         />
       </label>
 
@@ -105,4 +106,4 @@ function ExpenseForm({ formData, onChange, onSubmit, isEditing, onCancelEdit }) 
   );
 }
 
-export default ExpenseForm;
+export default memo(ExpenseForm);
